@@ -1,0 +1,247 @@
+#!/usr/bin/env bash
+#
+# This script will help you to install Customzier
+#
+# Homepage: https://github.com/fluxer/Customizer
+# Wiki: https://github.com/fluxer/Customizer/wiki
+# Issues: https://github.com/fluxer/Customizer/issues
+#
+# C0diNg: Ivailo Monev (a.k.a SmiL3y) <xakepa10@gmail.com> 
+#
+# set -e
+Reset='\e[0m'
+Red='\e[1;31m'
+Green='\e[1;32m'
+Yellow='\e[1;33m'
+
+############# Messages functions #############
+INFO() {
+    echo -e "${Yellow}# ${Green}$1${Reset}"
+}
+
+EXTRA_INFO() {
+    echo -e "${Yellow}# ${Green}$1:${Reset} ${Yellow}$2${Reset}"
+}
+
+SUB_INFO() {
+    echo -e "   ${Yellow}* ${Green}$1${Reset}"
+}
+
+EXTRA_SUB_INFO() {
+    echo -e "   ${Yellow}* ${Green}$1${Reset}: ${Yellow}$2${Green}"
+}
+
+EXTRA_SUB_INFO() {
+    echo -e "   ${Yellow}* ${Green}$1${Reset}: ${Yellow}$2${Reset}"
+}
+
+ERROR() {
+    echo -e "[${Red}ERROR${Reset}] ${Yellow}$1${Reset}"
+    exit 2
+}
+
+EXTRA_ERROR() {
+    echo -e "[${Red}ERROR${Reset}] ${Yellow}$1${Reset}: ${Green}$2${Reset}"
+    read nada
+    exit 2
+}
+
+ERROR_NO_EXIT() {
+    echo -e "[${Red}ERROR${Reset}] ${Yellow}$1${Reset}"
+    read nada
+}
+
+EXTRA_ERROR_NO_EXIT() {
+    echo -e "[${Red}ERROR${Reset}] ${Yellow}$1${Reset}"
+    read nada
+}
+
+############### Main functions ###############
+_check_dependecies_() {
+    local dep
+    
+    INFO "Checking dependencies"
+    for dep in ${_DEPS}; do
+        if [ -e "$(which ${dep})" ];then
+            EXTRA_SUB_INFO "${dep}" "PASSED"
+        else
+            EXTRA_SUB_INFO "${dep}" "FAILED"
+            _install_dependecies_
+        fi
+    done
+}
+_install_dependecies_() {
+    _DEBIAN_DEPS="git-core coreutils rsync xserver-xephyr x11-xserver-utils genisoimage squashfs-tools menu qemu imagemagick dbus ${_GB_DEPENDS}"
+
+    INFO "Checking distribution"
+    case "$(grep -o '[UKXL]buntu\|Debian\|Mint' /etc/issue)" in
+        Debian|[UKXL]buntu|Mint) apt-get update || ERROR_NO_EXIT "Unable to update packages database"
+							apt-get install ${_DEBIAN_DEPS} || ERROR "Unable to install the dependencies" ;;
+        *) ERROR_NO_EXIT "Unsupported distribution, you will have to install the dependencies by yourself"
+           EXTRA_INFO "The dependecies are" "${_DEPS}"
+	   if [ -e "`which git`" ];then
+		_clone_git_
+		_setup_
+                exit
+          else
+              exit 1
+          fi ;;
+    esac
+}
+
+_clone_git_() {
+    if [ -e "${_APP_DIR}" ];then  
+        EXTRA_INFO "Purging old version" "${_APP_DIR}"
+        rm -rf "${_APP_DIR}" || EXTRA_ERROR "Unable to remove" "${_APP_DIR}"
+    fi
+
+    # Clone from the Git repository
+    INFO "Cloning from Git"
+    EXTRA_SUB_INFO "Branch" "${_BRANCH}"
+    EXTRA_SUB_INFO "URL" "${_URL}"
+    EXTRA_SUB_INFO "Directory" "${_APP_DIR}"
+    
+    git clone --depth=1 -b "${_BRANCH}" "${_URL}" "${_APP_DIR}" || ERROR "Unable to clone from Git"
+}
+
+_compile_() {
+    local bin
+    local bin2
+    
+    if [ "${_BRANCH}" = "gambas3" ];then
+        bin="gbc3"
+        bin2="gba3"
+    else
+        bin="gbc2"
+        bin2="gba2"
+    fi
+    
+    INFO "Compiling and archiving binary"
+    cd "${_APP_DIR}/GUI"
+    SUB_INFO "Compiling"
+    "${bin}" -a -g -p -m . || ERROR "Unable to compile binary" "${_APP_DIR}"
+    SUB_INFO "Archiving"
+    "${bin2}" -o "${_APP_DIR}/GUI.gambas" || ERROR "Unable to archive binary" "${_APP_DIR}"
+}
+
+_setup_() {
+    local _SU_CMD
+    # Detecting if su-tools are available and set that to be used when launching the app
+    INFO "Detecting su tool"
+    if [ -e "$(which su-to-root)" ];then
+        _SU_CMD="su-to-root -X -c"
+    elif [ -e "$(which kdesudo)" ];then
+        _SU_CMD="kdesudo"
+    elif [ -e "$(which gksu)" ];then
+        _SU_CMD="gksu"
+    elif [ -e "$(which sudo)" ];then
+        _SU_CMD="sudo"
+    else
+        _SU_CMD="su"
+    fi
+
+    # Create launcher in /usr/bin to be able to run it only with 'customizer'
+    INFO "Creating entries"
+    EXTRA_SUB_INFO "Creating" "/usr/bin/customizer"
+    echo -e "#!/bin/sh\n${_SU_CMD} ${_APP_DIR}/GUI.gambas" > /usr/bin/customizer || ERROR_NO_EXIT "Unable to create executable entry"
+
+    # Create desktop file to register in menus for Desktop environments and panels
+    EXTRA_SUB_INFO "Creating" "/usr/share/applications/Customizer.desktop"
+    mkdir -p /usr/share/applications
+    echo "[Desktop Entry]
+Name=Customizer
+Version=3.2.3
+Exec=/usr/bin/customizer
+Comment=Ubuntu based LiveCD ISO images remastering tool
+Icon=${_APP_DIR}/logo.png
+Type=Application
+Terminal=false
+StartupNotify=true
+Encoding=UTF-8
+Categories=System;" >  /usr/share/applications/Customizer.desktop || ERROR_NO_EXIT "Unable to create applications entry"
+
+    # Create desktop file to register in menus for Window Managers
+    EXTRA_SUB_INFO "Creating" "/usr/share/menu/customizer"
+    mkdir -p /usr/share/menu
+    echo "?package(customizer): needs=\"x11\" \
+hints=\"Ubuntu LiveCD Remastering Tool\" \
+section=\"Applications/System/Administration\" \
+title=\"Customizer\" \
+command=\"/usr/bin/customizer\" \
+icon=${_APP_DIR}/logo.png" > /usr/share/menu/customizer || ERROR_NO_EXIT "Unable to create menu entry"
+    
+    INFO "Setting up permissions"
+    {
+    chmod -v +x /usr/bin/customizer;
+    chmod -v +x "${_APP_DIR}/CLI.sh";
+    chmod -v +x "${_APP_DIR}/scripts/"*;} || ERROR_NO_EXIT "Unable to setup permissions"
+}
+############# Arguments handler ##############
+Usage () {
+echo "
+Customizer Installer v0.6
+
+ Main options:
+     -i|--install                        Install Customizer from Git
+     -u|--update                         Update Customizer from Git
+     -s|--setup                          Skip installation and just do post-setup
+	 
+ Other options:
+
+     -b|--branch <master|devel|gambas3>  Enter branch from which to clone 
+     -U|--url <default|http|ssh>         Enter URL from which to clone 
+     -h|--help                           Display this message
+     
+ Notes:
+    
+    - Supply the optional arguments first (i.e. './install -b devel -i')
+    - Default branch is master (stable)
+    - URLs for options are as follows:
+        DEFAULT - git://github.com/fluxer/Customizer.git
+        HTTP    - https://fluxer@github.com/fluxer/Customizer.git
+        SSH     - git@github.com:fluxer/Customizer.git
+"
+}
+_check_branch_() {
+    case "${_BRANCH}" in
+        master|devel) true ;;
+        gambas3) _DEPS="git mktemp rsync tar xhost Xephyr convert dbus-daemon mksquashfs unsquashfs genisoimage qemu-system-$(uname -m) gbr3 gbc3 gba3"
+                 _GB_DEPENDS="gambas3-gb-gtk gambas3-gb-form gambas3-gb-form-stock gambas3-gb-image gambas3-runtime gambas3-dev" ;;
+        *) EXTRA_ERROR "This isn't valid branch option, uae" "master|devel|gambas3" ;;
+    esac
+}
+_check_url_() {
+    case "${_URL}" in
+        default) _URL="git://github.com/fluxer/Customizer.git" ;;
+        http) _URL="https://fluxer@github.com/fluxer/Customizer.git" ;;
+        ssh) _URL="git@github.com:fluxer/Customizer.git" ;;
+        *) EXTRA_ERROR "This isn't valid URL option, use:" "default|http|ssh" ;;
+    esac
+}
+
+# Variables used later
+_DEPS="git mktemp rsync tar xhost Xephyr convert dbus-daemon mksquashfs unsquashfs genisoimage qemu-system-$(uname -m) gbr2 gbc2 gba2"
+_GB_DEPENDS="gambas2-gb-gtk gambas2-gb-form gambas2-gb-image gambas2-runtime gambas2-dev"
+_URL="git://github.com/fluxer/Customizer.git"
+_BRANCH="master"
+_APP_DIR="/opt/Customizer"
+
+if [ "$#" != "0" ];then
+    for arg in "${@}"; do
+        case "${arg}" in
+            -b|--branch) _BRANCH="${2}"; shift; _check_branch_ ;;
+            -U|--url) _URL="${2}"; shift; _check_url_ ;;
+            -h|--help) Usage; exit 0 ;;
+        esac
+    done
+
+    for arg in "${@}"; do
+        case "${arg}" in
+            -i|--install) _check_dependecies_; _clone_git_; _compile_; _setup_; shift ;;
+            -u|--update) _check_dependecies_; _clone_git_; _compile_; shift ;;
+            -s|--setup) _setup_; shift ;;
+        esac
+    done
+else
+    Usage
+fi
