@@ -1,0 +1,28 @@
+sudo apt-get update && sudo apt-get dist-upgrade
+sudo add-apt-repository ppa:webupd8team/java -y
+sudo add-apt-repository ppa:ondrej/php5 -y
+sudo add-apt-repository ppa:mitya57/ppa -y
+sudo add-apt-repository ppa:webupd8team/sublime-text-3 -y
+sudo add-apt-repository ppa:chris-lea/node.js -y
+sudo add-apt-repository ppa:marutter/rrutter -y
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
+echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | sudo tee /etc/apt/sources.list.d/mongodb.list
+sudo apt-get update && sudo apt-get install -y build-essential python-software-properties python-dev python-pip python-qt4 git curl zsh nginx php5-fpm php5-cli php5-curl oracle-java8-installer oracle-java8-set-default vlc retext sublime-text-installer nodejs autoconf bison libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev r-base r-base-dev retext mongodb-org
+sudo npm install -g forever
+sudo npm install -g pm2 --unsafe-perm
+sudo npm install -g supervisor
+sudo npm install -g bower
+sudo npm install -g express
+sudo npm install -g express-generator
+sudo pip install numpy
+sudo pip install sympy
+sudo pip install scipy
+sudo pip install nltk
+wget http://robomongo.org/files/linux/robomongo-0.8.4-x86_64.deb -O robomongo.deb && dpkg -i robomongo.deb && rm robomongo.deb
+wget https://bitbucket.org/rhiokim/haroopad-download/downloads/haroopad-v0.12.2_amd64.deb -O haroopad.deb && sudo dpkg -i haroopad.deb && rm haroopad.deb
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O chrome.deb && dpkg -i chrome.deb; rm chrome.deb
+wget http://kdl.cc.ksosoft.com/wps-community/download/a15/wps-office_9.1.0.4751~a15_i386.deb -O wps.deb && dpkg -i wps.deb; rm wps.deb
+wget http://kdl.cc.ksosoft.com/wps-community/download/a15/wps-office-fonts_1.0_all.deb -O wps-fonts.deb && dpkg -i wps-fonts.deb; rm wps-fonts.deb
+sudo apt-get -fy install
+curl -L http://install.ohmyz.sh | sh
+sudo chsh $USER -s $(which zsh)
