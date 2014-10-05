@@ -18,11 +18,14 @@ sudo pip install numpy
 sudo pip install sympy
 sudo pip install scipy
 sudo pip install nltk
-wget http://robomongo.org/files/linux/robomongo-0.8.4-x86_64.deb -O robomongo.deb && dpkg -i robomongo.deb && rm robomongo.deb
+
 wget https://bitbucket.org/rhiokim/haroopad-download/downloads/haroopad-v0.12.2_amd64.deb -O haroopad.deb && sudo dpkg -i haroopad.deb && rm haroopad.deb
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O chrome.deb && dpkg -i chrome.deb; rm chrome.deb
-wget http://kdl.cc.ksosoft.com/wps-community/download/a15/wps-office_9.1.0.4751~a15_i386.deb -O wps.deb && dpkg -i wps.deb; rm wps.deb
-wget http://kdl.cc.ksosoft.com/wps-community/download/a15/wps-office-fonts_1.0_all.deb -O wps-fonts.deb && dpkg -i wps-fonts.deb; rm wps-fonts.deb
+
+wget http://kdl.cc.ksosoft.com/wps-community/download/a15/wps-office_9.1.0.4751~a15_i386.deb -O wps.deb && sudo dpkg -i wps.deb; rm wps.deb
+wget http://kdl.cc.ksosoft.com/wps-community/download/a15/wps-office-fonts_1.0_all.deb -O wps-fonts.deb && sudo dpkg -i wps-fonts.deb; rm wps-fonts.deb
+wget http://robomongo.org/files/linux/robomongo-0.8.4-x86_64.deb -O robomongo.deb && sudo dpkg -i robomongo.deb && rm robomongo.deb
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O chrome.deb && sudo dpkg -i chrome.deb; rm chrome.deb
+wget http://download.teamviewer.com/download/teamviewer_linux.deb && teamviewer.deb && sudo dpkg -i teamviewer.deb; rm teamviewer.deb
 sudo apt-get -fy install
 curl -L http://install.ohmyz.sh | sh
 sudo chsh $USER -s $(which zsh)
